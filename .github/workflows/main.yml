@@ -18,68 +18,6 @@ jobs:
           name: windows-app
           path: target/release/
 
-  linux-x86:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-
-      - name: Install Linux dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libxcb1 \
-            libxcb-render0 \
-            libxcb-shape0 \
-            libxcb-xfixes0 \
-            libxcb-randr0 \
-            libxcb-xinerama0 \
-            libxcb-xkb1 \
-            libxkbcommon-x11-0 \
-            libwayland-dev \
-            libxkbcommon-dev
-
-      - name: Build Linux x86_64
-        run: cargo build --release
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: linux-x86-app
-          path: target/release/
-
-  linux-arm:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-
-      - name: Install Linux dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libxcb1:arm64 \
-            libxcb-render0:arm64 \
-            libxcb-shape0:arm64 \
-            libxcb-xfixes0:arm64 \
-            libxcb-randr0:arm64 \
-            libxcb-xinerama0:arm64 \
-            libxcb-xkb1:arm64 \
-            libxkbcommon-x11-0:arm64 \
-            libwayland-dev:arm64 \
-            libxkbcommon-dev:arm64 \
-            gcc-aarch64-linux-gnu
-
-      - name: Install ARM target
-        run: rustup target add aarch64-unknown-linux-gnu
-
-      - name: Build Linux ARM
-        run: cargo build --release --target aarch64-unknown-linux-gnu
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: linux-arm-app
-          path: target/aarch64-unknown-linux-gnu/release/
-
   macos:
     runs-on: macos-latest
     steps:
