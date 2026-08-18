@@ -57,16 +57,16 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            libxcb1 \
-            libxcb-render0 \
-            libxcb-shape0 \
-            libxcb-xfixes0 \
-            libxcb-randr0 \
-            libxcb-xinerama0 \
-            libxcb-xkb1 \
-            libxkbcommon-x11-0 \
-            libwayland-dev \
-            libxkbcommon-dev \
+            libxcb1:arm64 \
+            libxcb-render0:arm64 \
+            libxcb-shape0:arm64 \
+            libxcb-xfixes0:arm64 \
+            libxcb-randr0:arm64 \
+            libxcb-xinerama0:arm64 \
+            libxcb-xkb1:arm64 \
+            libxkbcommon-x11-0:arm64 \
+            libwayland-dev:arm64 \
+            libxkbcommon-dev:arm64 \
             gcc-aarch64-linux-gnu
 
       - name: Install ARM target
