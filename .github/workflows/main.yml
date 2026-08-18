@@ -23,8 +23,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libxcb1 \
+            libxcb-render0 \
+            libxcb-shape0 \
+            libxcb-xfixes0 \
+            libxcb-randr0 \
+            libxcb-xinerama0 \
+            libxcb-xkb1 \
+            libxkbcommon-x11-0 \
+            libwayland-dev \
+            libxkbcommon-dev
+
       - name: Build Linux x86_64
         run: cargo build --release
+
       - uses: actions/upload-artifact@v4
         with:
           name: linux-x86-app
@@ -35,12 +52,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libxcb1 \
+            libxcb-render0 \
+            libxcb-shape0 \
+            libxcb-xfixes0 \
+            libxcb-randr0 \
+            libxcb-xinerama0 \
+            libxcb-xkb1 \
+            libxkbcommon-x11-0 \
+            libwayland-dev \
+            libxkbcommon-dev \
+            gcc-aarch64-linux-gnu
+
       - name: Install ARM target
         run: rustup target add aarch64-unknown-linux-gnu
-      - name: Install cross compiler
-        run: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu
+
       - name: Build Linux ARM
         run: cargo build --release --target aarch64-unknown-linux-gnu
+
       - uses: actions/upload-artifact@v4
         with:
           name: linux-arm-app
