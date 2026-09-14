@@ -37,24 +37,20 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
 
-      - name: Install Tauri CLI
-        run: cargo install tauri-cli
-
-      - name: Build macOS app
-        run: cargo tauri build
+      - name: Build macOS
+        run: cargo build --release
 
       - name: Create macOS ZIP
         id: zip
         run: |
-          cd src-tauri/target/release/bundle/macos
-          zip -r ss_tool_cli_mac.zip ss_tool_cli.app
-          echo "mac_zip=src-tauri/target/release/bundle/macos/ss_tool_cli_mac.zip" >> $GITHUB_OUTPUT
+          zip -j ss_tool_cli_mac.zip target/release/ss_tool_cli
+          echo "mac_zip=ss_tool_cli_mac.zip" >> $GITHUB_OUTPUT
 
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
         with:
           name: macos-app
-          path: src-tauri/target/release/bundle/macos/ss_tool_cli_mac.zip
+          path: ss_tool_cli_mac.zip
 
   release:
     runs-on: ubuntu-latest
