@@ -9,7 +9,7 @@ jobs:
   windows:
     runs-on: windows-latest
     outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      win_zip: ${{ steps.zip.outputs.win_zip }}
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -18,30 +18,21 @@ jobs:
         run: cargo build --release
 
       - name: Create Windows ZIP
-        run: powershell Compress-Archive -Path target/release/ss_tool_cli.exe -DestinationPath ss_tool_cli_win.zip
+        id: zip
+        run: |
+          powershell Compress-Archive -Path target/release/ss_tool_cli.exe -DestinationPath ss_tool_cli_win.zip
+          echo "win_zip=ss_tool_cli_win.zip" >> $env:GITHUB_OUTPUT
 
-      - name: Create or update release
-        id: create_release
-        uses: softprops/action-gh-release@v1
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
         with:
-          tag_name: latest
-          name: Latest Build
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload Windows release asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ss_tool_cli_win.zip
-          asset_name: ss_tool_cli_win.zip
-          asset_content_type: application/zip
+          name: windows-app
+          path: ss_tool_cli_win.zip
 
   mac:
     runs-on: macos-latest
-    needs: windows
+    outputs:
+      mac_zip: ${{ steps.zip.outputs.mac_zip }}
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -53,16 +44,49 @@ jobs:
         run: cargo tauri build
 
       - name: Create macOS ZIP
+        id: zip
         run: |
           cd src-tauri/target/release/bundle/macos
           zip -r ss_tool_cli_mac.zip ss_tool_cli.app
+          echo "mac_zip=src-tauri/target/release/bundle/macos/ss_tool_cli_mac.zip" >> $GITHUB_OUTPUT
 
-      - name: Upload macOS release asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
         with:
-          upload_url: ${{ needs.windows.outputs.upload_url }}
-          asset_path: src-tauri/target/release/bundle/macos/ss_tool_cli_mac.zip
-          asset_name: ss_tool_cli_mac.zip
-          asset_content_type: application/zip
+          name: macos-app
+          path: src-tauri/target/release/bundle/macos/ss_tool_cli_mac.zip
+
+  release:
+    runs-on: ubuntu-latest
+    needs: [windows, mac]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Delete existing latest release if exists
+        run: |
+          gh release delete latest -y || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create new latest release
+        run: |
+          gh release create latest --title "Latest Build" --notes "Auto build"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Upload Windows asset
+        run: |
+          gh release upload latest artifacts/windows-app/ss_tool_cli_win.zip
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload macOS asset
+        run: |
+          gh release upload latest artifacts/macos-app/ss_tool_cli_mac.zip
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
