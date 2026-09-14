@@ -11,18 +11,14 @@ jobs:
     outputs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
 
       - name: Build Windows
         run: cargo build --release
 
       - name: Create Windows ZIP
-        run: |
-          powershell Compress-Archive -Path target/release/ss_tool_cli.exe -DestinationPath ss_tool_cli_win.zip
+        run: powershell Compress-Archive -Path target/release/ss_tool_cli.exe -DestinationPath ss_tool_cli_win.zip
 
       - name: Create or update release
         id: create_release
@@ -45,25 +41,22 @@ jobs:
 
   mac:
     runs-on: macos-latest
-    needs: windows   # ← Windows の upload_url を受け取る
+    needs: windows
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-  
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-  
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+
       - name: Install Tauri CLI
         run: cargo install tauri-cli
-  
+
       - name: Build macOS app
         run: cargo tauri build
-  
+
       - name: Create macOS ZIP
         run: |
           cd src-tauri/target/release/bundle/macos
           zip -r ss_tool_cli_mac.zip ss_tool_cli.app
-  
+
       - name: Upload macOS release asset
         uses: actions/upload-release-asset@v1
         env:
