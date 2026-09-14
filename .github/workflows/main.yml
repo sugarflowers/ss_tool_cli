@@ -50,18 +50,22 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
+  
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
-
-      - name: Build macOS
-        run: cargo build --release
-
-      # macOS のビルド結果を ZIP にまとめる
+  
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli
+  
+      - name: Build macOS app
+        run: cargo tauri build
+  
+      # macOS の .app を ZIP にまとめる
       - name: Create macOS ZIP
         run: |
-          zip -r ss_tool_cli_mac.zip target/release/ss_tool_cli.app
-
+          cd src-tauri/target/release/bundle/macos
+          zip -r ss_tool_cli_mac.zip ss_tool_cli.app
+  
       # Release を作成（latest を上書き）
       - name: Create or update release
         id: create_release
@@ -71,7 +75,7 @@ jobs:
           name: Latest Build
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+  
       # Release に ZIP をアップロード
       - name: Upload macOS release asset
         uses: actions/upload-release-asset@v1
@@ -79,6 +83,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ss_tool_cli_mac.zip
+          asset_path: src-tauri/target/release/bundle/macos/ss_tool_cli_mac.zip
           asset_name: ss_tool_cli_mac.zip
           asset_content_type: application/zip
+
