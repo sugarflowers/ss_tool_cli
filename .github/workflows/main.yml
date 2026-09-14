@@ -8,6 +8,8 @@ on:
 jobs:
   windows:
     runs-on: windows-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -18,12 +20,10 @@ jobs:
       - name: Build Windows
         run: cargo build --release
 
-      # ZIP を作る（必要なら）
       - name: Create Windows ZIP
         run: |
           powershell Compress-Archive -Path target/release/ss_tool_cli.exe -DestinationPath ss_tool_cli_win.zip
 
-      # Release を作成（latest を上書き）
       - name: Create or update release
         id: create_release
         uses: softprops/action-gh-release@v1
@@ -33,7 +33,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Release に ZIP をアップロード
       - name: Upload Windows release asset
         uses: actions/upload-release-asset@v1
         env:
@@ -44,9 +43,9 @@ jobs:
           asset_name: ss_tool_cli_win.zip
           asset_content_type: application/zip
 
-
   mac:
     runs-on: macos-latest
+    needs: windows   # ← Windows の upload_url を受け取る
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -65,22 +64,12 @@ jobs:
           cd src-tauri/target/release/bundle/macos
           zip -r ss_tool_cli_mac.zip ss_tool_cli.app
   
-      - name: Create or update release
-        id: create_release_mac
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: latest
-          name: Latest Build
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  
       - name: Upload macOS release asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release_mac.outputs.upload_url }}
+          upload_url: ${{ needs.windows.outputs.upload_url }}
           asset_path: src-tauri/target/release/bundle/macos/ss_tool_cli_mac.zip
           asset_name: ss_tool_cli_mac.zip
           asset_content_type: application/zip
-
