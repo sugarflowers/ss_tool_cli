@@ -9,14 +9,41 @@ jobs:
   windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
       - name: Build Windows
         run: cargo build --release
-      - uses: actions/upload-artifact@v4
+
+      # ZIP を作る（必要なら）
+      - name: Create Windows ZIP
+        run: |
+          powershell Compress-Archive -Path target/release/ss_tool_cli.exe -DestinationPath ss_tool_cli_win.zip
+
+      # Release を作成（latest を上書き）
+      - name: Create or update release
+        id: create_release
+        uses: softprops/action-gh-release@v1
         with:
-          name: windows-app
-          path: target/release/ss_tool_cli.exe
+          tag_name: latest
+          name: Latest Build
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Release に ZIP をアップロード
+      - name: Upload Windows release asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ss_tool_cli_win.zip
+          asset_name: ss_tool_cli_win.zip
+          asset_content_type: application/zip
+
 
   macos:
     runs-on: macos-latest
