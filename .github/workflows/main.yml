@@ -45,14 +45,40 @@ jobs:
           asset_content_type: application/zip
 
 
-  macos:
+  mac:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
       - name: Build macOS
         run: cargo build --release
-      - uses: actions/upload-artifact@v4
+
+      # macOS のビルド結果を ZIP にまとめる
+      - name: Create macOS ZIP
+        run: |
+          zip -r ss_tool_cli_mac.zip target/release/ss_tool_cli.app
+
+      # Release を作成（latest を上書き）
+      - name: Create or update release
+        id: create_release
+        uses: softprops/action-gh-release@v1
         with:
-          name: macos-app
-          path: target/release/ss_tool_cli
+          tag_name: latest
+          name: Latest Build
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Release に ZIP をアップロード
+      - name: Upload macOS release asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ss_tool_cli_mac.zip
+          asset_name: ss_tool_cli_mac.zip
+          asset_content_type: application/zip
